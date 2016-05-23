@@ -1,0 +1,337 @@
+package file_operations;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Date;
+import java.util.Scanner;
+import java.util.StringTokenizer;
+
+public class FileOperations 
+{
+	StringTokenizer parseCommand;
+
+	public void delete(File fileName)
+	{
+		if(fileName.exists())
+		{
+			System.out.println("deleting " + fileName.getAbsolutePath());
+			if(fileName.delete())
+				System.out.println(fileName.getName() + " has been successfuly deleted.");
+			else
+				System.out.println(fileName.getName() + " has not been successfuly deleted.");
+		}
+		else
+			System.out.println("delete: can't delete: " + fileName.getName() + " doesn't exist.");
+	}
+	public void rename(File fileName, File newFile)
+	{
+		if(fileName.exists())
+		{
+			System.out.println("renaming " + fileName.getAbsolutePath());
+			if(fileName.renameTo(newFile))
+			{
+				System.out.println("successfuly renamed " + fileName.getName() + " to " + newFile.getName());
+				fileName.delete();
+			}
+			else
+				System.out.println(fileName.getName() + " has not been successfuly renamed to " + newFile.getName());
+		}
+		else
+			System.out.println("rename: can't rename: " + fileName.getName() + " doesn't exist.");
+	}
+	public void list(File fileName)
+	{
+		if(fileName.exists())
+		{
+			String[] fileNames = fileName.list();
+
+			System.out.println("listing files for " + fileName.getAbsolutePath());
+
+			for(int i=0; i < fileNames.length; i++)
+			{
+				System.out.println(fileNames[i]);
+			}
+		}
+		else
+			System.out.println("list: can't list: " + fileName.getName() + " doesn't exist.");
+	}
+	public void size(File fileName)
+	{
+		if(fileName.exists())
+		{
+			long size = fileName.length();
+			System.out.println("size for " + fileName.getAbsolutePath() + " is = " + size);
+		}
+
+		else
+			System.out.println("size: can't open: " + fileName.getName() + " doesn't exist.");
+	}
+	public void lastModified(File fileName)
+	{
+		if(fileName.exists())
+		{
+			long time = fileName.lastModified();
+			Date d = new Date(time);
+			System.out.println("last modified for " + fileName.getAbsolutePath());
+			System.out.println("date = " + d);
+		}
+
+		else
+			System.out.println("lastModified: can't open: " + fileName.getName() + " doesn't exist.");
+	}
+	public void mkdir(File fileName)
+	{
+		if(fileName.mkdir())
+			System.out.println("mkdir successful: " +  fileName.getAbsolutePath());
+		else
+			System.out.println("mkdir not successful: ");
+	}
+	public void createFile(File fileName, String data)
+	{
+		PrintStream ps = null;
+		String outputFileName = null;
+
+		try
+		{
+			fileName.createNewFile();
+
+			outputFileName = fileName.getAbsolutePath();
+			FileOutputStream fo = new FileOutputStream(outputFileName);
+
+			ps = new PrintStream(fo);
+
+			ps.print(data);
+
+			System.out.println("created file for " + fileName.getAbsolutePath());
+		}
+
+		catch(Exception e)
+		{
+			System.out.println("error " + e + " in creating file for " + fileName.getAbsolutePath());
+		}
+
+		finally
+		{
+			if(ps != null)
+			{
+				ps.close();
+			}
+		}
+	}
+
+	public void printFile(File fileName)
+	{
+		Scanner scan = null;
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(fileName);
+			scan = new Scanner(fis);
+			while (scan.hasNextLine())
+			{
+				System.out.println(scan.nextLine());
+			}
+		} 
+		catch (FileNotFoundException e) 
+		{
+			System.out.println("printToScreen: can't open: " + fileName);
+		}
+		finally
+		{
+			if (scan != null)
+				scan.close();
+		}
+	}
+
+	void printUsage()
+	{
+		String commands[] = {"?", "quit", "delete fileName", "rename oldFilename newFilename", "size fileName", "list dir", "printFile fileName", "createFile fileName", "mkdir dir"};
+
+		for(int i=0; i < commands.length; i++)
+			System.out.println(commands[i]);
+	}
+
+	private String getNextToken()
+	{
+		if (parseCommand.hasMoreTokens())
+			return parseCommand.nextToken();
+		else
+			return null;
+	}
+
+	private File getFile()
+	{
+		File f = null;
+		String fileName = getNextToken();
+		if (fileName == null)     
+			System.out.println("Missing a File name");                  
+		else
+			f = new File(fileName);      
+
+		return f;
+	}
+
+	public boolean processCommandLine(String line)    
+	{
+		String command = null;
+		FileOperations fOps = null;
+
+		if(line != null)
+		{
+			parseCommand = new StringTokenizer(line);
+			command = getNextToken();
+			fOps = new FileOperations();
+			File fileName = null;
+			File newFile = null;
+			String dataIn = "";
+			String dataOut = "";
+			boolean moreData = true;
+
+			System.out.println("===>");
+			System.out.println("Processing: " + command );
+
+			switch(command)
+			{
+			case "?": 
+			{
+				printUsage();
+				break;
+			}
+			case "quit":
+			{
+				break;
+			}
+			case "delete":
+			{
+				fileName = getFile();
+				fOps.delete(fileName);
+				break;
+			}
+			case "rename":
+			{
+				fileName = getFile();
+				newFile = getFile();
+				fOps.rename(fileName, newFile);
+				break;
+			}
+			case "size":
+			{
+				fileName = getFile();
+				fOps.size(fileName);
+				break;
+			}
+			case "list":
+			{
+				fileName = getFile();
+				fOps.list(fileName);
+				break;
+			}
+			case "printFile":
+			{
+				fileName = getFile();
+				fOps.printFile(fileName);
+				break;
+			}
+			case "createFile":
+			{
+				fileName = getFile();
+				while(moreData)
+				{
+					dataIn = getNextToken();
+					if(dataIn != null)
+						dataOut += dataIn + " ";
+					else
+						moreData = false;
+				}
+				fOps.createFile(fileName, dataOut);
+				break;
+			}
+			case "lastModified":
+			{
+				fileName = getFile();
+				fOps.lastModified(fileName);
+				break;
+			}
+			case "mkdir":
+			{
+				fileName = getFile();
+				fOps.mkdir(fileName);
+				break;
+			}
+			default:
+			{
+				System.out.println("Unrecognized command: " + command);
+				break;
+			}
+			}
+			System.out.println("******************************************************");
+
+			if(command != "quit")
+				return true;
+			else 
+				return false;
+		}
+
+		else
+			return false;
+	}
+
+	void processCommandFile(String commandFile)
+	{
+		// Open up a scanner based on the commandFile file name.  Read the commands from this file 
+		// using the Scanner line by line.  For each line read, call processCommandLine.   Continue reading 
+		// from this file as long as processCommandLine returns true and there are more lines in the file.  
+		// At the end, close the Scanner.
+
+		Scanner input = null;
+		String line = null;
+		boolean moreCommands = true;
+
+		try
+		{
+			FileInputStream fi = new FileInputStream(commandFile);
+			input =  new Scanner(fi);
+
+			while(moreCommands)
+			{
+				if(input.hasNextLine())
+				{
+					line = input.nextLine();
+					processCommandLine(line);
+				}
+				else
+					moreCommands = false;
+			}		
+
+		}
+
+		catch(FileNotFoundException e)
+		{
+			System.out.println("Error file not found " + e);
+		}
+
+		finally
+		{
+			if(input != null)
+			{
+				input.close();
+			}
+
+		}
+	}
+
+	public static void main(String[] args) 
+	{
+		FileOperations fo= new FileOperations();
+		for (int i=0; i < args.length; i++)
+		{
+			System.out.println("\n\n============  Processing " + args[i] +" =======================\n");
+			fo.processCommandFile(args[i]);
+		}
+
+		System.out.println("Done with FileOperations");
+	}
+}
